@@ -30,9 +30,9 @@ public class AggregationProfileParser {
     public static String[] metricProfile = new String[2];
     public static ArrayList<GroupOps> groups = new ArrayList<>();
 
-    public static void loadAggrProfileInfo(String baseUri, String key, String proxy) throws IOException, ParseException {
+    public static void loadAggrProfileInfo(String baseUri, String key, String proxy,String aggregationId,String dateStr) throws IOException, ParseException {
 
-        JSONObject jsonObject = RequestManager.getAggregationProfileRequest(baseUri, key, proxy);
+        JSONObject jsonObject = RequestManager.getAggregationProfileRequest(baseUri, key, proxy,aggregationId,dateStr);
 
         JSONArray dataList = (JSONArray) jsonObject.get("data");
 

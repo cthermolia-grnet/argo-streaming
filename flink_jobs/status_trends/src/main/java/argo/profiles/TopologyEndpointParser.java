@@ -29,17 +29,13 @@ public class TopologyEndpointParser implements Serializable{
 
     private HashMap<String, HashMap<String, String>> topologyEndpoint;
     private final String url = "/topology/endpoints/by_report";
-// private final String url = "/topology/endpoints";
 
     public TopologyEndpointParser() {
     }
 
     
     public TopologyEndpointParser(String apiUri, String key, String proxy, String date, String reportname) throws IOException, ParseException {
-        // by_report/{report-name}?date=YYYY-MM-DD
         String uri = apiUri + url + "/" + reportname;
-        // String uri = apiUri + url;
-
         if (date != null) {
             uri = uri + "?date=" + date;
         }

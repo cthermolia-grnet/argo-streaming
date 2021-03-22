@@ -18,7 +18,6 @@ package argo.batch;
  */
 import argo.avro.MetricData;
 import argo.functions.calctimelines.CalcLastTimeStatus;
-import argo.functions.calctimelines.MapServices;
 import argo.functions.calctimelines.ServiceFilter;
 import argo.functions.calctimelines.TopologyMetricFilter;
 import argo.functions.calctrends.CalcEndpointFlipFlopTrends;
@@ -28,24 +27,16 @@ import argo.pojos.EndpointTrends;
 import argo.pojos.MetricTrends;
 import argo.pojos.ServiceTrends;
 import argo.utils.Utils;
-import com.mongodb.hadoop.io.BSONWritable;
-import java.util.ArrayList;
 
 import java.util.HashMap;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
-import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.api.java.utils.ParameterTool;
-import org.apache.hadoop.io.Text;
 import argo.profiles.ProfilesLoader;
-import com.mongodb.BasicDBObject;
-import com.mongodb.hadoop.mapred.MongoOutputFormat;
 import org.apache.flink.api.common.functions.MapFunction;
 import org.apache.flink.api.common.operators.Order;
-import org.apache.flink.api.java.hadoop.mapred.HadoopOutputFormat;
 import org.apache.flink.api.java.io.AvroInputFormat;
 import org.apache.flink.core.fs.Path;
-import org.apache.hadoop.mapred.JobConf;
 
 /**
  * Skeleton for a Flink Batch Job.
@@ -64,35 +55,44 @@ import org.apache.hadoop.mapred.JobConf;
  */
 public class BatchServiceFlipFlopTrends {
 
+    private static HashMap<String, HashMap<String, String>> opTruthTableMap = new HashMap<>(); // the truth table for the operations to be applied on timeline
     private static DataSet<MetricData> yesterdayData;
     private static DataSet<MetricData> todayData;
     private static Integer rankNum;
-    private static final String serviceTrends = "serviceTrends";
+    private static final String serviceTrends = "flipflop_trends_services";
     private static String mongoUri;
     private static ProfilesLoader profilesLoader;
+    private static String profilesDate;
+    private static String format = "yyyy-MM-dd";
+    private static boolean clearMongo = false;
+    private static String reportId;
 
     public static void main(String[] args) throws Exception {
         // set up the batch execution environment
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
 
-         ParameterTool params = ParameterTool.fromArgs(args);
+        ParameterTool params = ParameterTool.fromArgs(args);
         //check if all required parameters exist and if not exit program
-        if (!Utils.checkParameters(params, "yesterdayData", "todayData", "mongoUri","apiUri", "key")) {
+        if (!Utils.checkParameters(params, "yesterdayData", "todayData", "mongoUri", "apiUri", "key", "date", "reportId")) {
             System.exit(0);
         }
 
         env.setParallelism(1);
+        if (params.get("clearMongo") != null && params.getBoolean("clearMongo") == true) {
+            clearMongo = true;
+        }
+        profilesDate = Utils.getParameterDate(format, params.getRequired("date"));
         if (params.get("N") != null) {
             rankNum = params.getInt("N");
         }
+          reportId = params.getRequired("reportId");
+
         mongoUri = params.get("mongoUri");
-         profilesLoader = new ProfilesLoader(params);
+        profilesLoader = new ProfilesLoader(params);
         yesterdayData = readInputData(env, params, "yesterdayData");
         todayData = readInputData(env, params, "todayData");
-        
         // calculate on data 
-        DataSet<ServiceTrends> resultData = calcFlipFlops();
-        writeToMongo(resultData);
+        calcFlipFlops();
 
 // execute program
         env.execute("Flink Batch Java API Skeleton");
@@ -102,7 +102,7 @@ public class BatchServiceFlipFlopTrends {
 // filter yesterdaydata and exclude the ones not contained in topology and metric profile data and get the last timestamp data for each service endpoint metric
 // filter todaydata and exclude the ones not contained in topology and metric profile data , union yesterday data and calculate status changes for each service endpoint metric
 // rank results
-    private static DataSet<ServiceTrends> calcFlipFlops() {
+    private static void calcFlipFlops() {
 
         DataSet<MetricData> filteredYesterdayData = yesterdayData.filter(new TopologyMetricFilter(profilesLoader.getMetricProfileParser(), profilesLoader.getTopologyEndpointParser(), profilesLoader.getTopolGroupParser(), profilesLoader.getAggregationProfileParser())).groupBy("hostname", "service", "metric").reduceGroup(new CalcLastTimeStatus());
         DataSet<MetricData> filteredTodayData = todayData.filter(new TopologyMetricFilter(profilesLoader.getMetricProfileParser(), profilesLoader.getTopologyEndpointParser(), profilesLoader.getTopolGroupParser(), profilesLoader.getAggregationProfileParser()));
@@ -113,8 +113,7 @@ public class BatchServiceFlipFlopTrends {
         //group data by service endpoint  and count flip flops
         DataSet<EndpointTrends> serviceEndpointGroupData = serviceEndpointMetricGroupData.groupBy("group", "endpoint", "service").reduceGroup(new CalcEndpointFlipFlopTrends(profilesLoader.getAggregationProfileParser().getMetricOp(), profilesLoader.getOperationParser()));
 
-
-      //group data by service   and count flip flops
+        //group data by service   and count flip flops
         DataSet<ServiceTrends> serviceGroupData = serviceEndpointGroupData.filter(new ServiceFilter(profilesLoader.getAggregationProfileParser())).groupBy("group", "service").reduceGroup(new CalcServiceFlipFlop(profilesLoader.getOperationParser(), profilesLoader.getAggregationProfileParser()));
         //flat map data to add function as described in aggregation profile groups
 
@@ -123,7 +122,16 @@ public class BatchServiceFlipFlopTrends {
         } else {
             serviceGroupData = serviceGroupData.sortPartition("flipflops", Order.DESCENDING);
         }
-        return serviceGroupData;
+        MongoTrendsOutput metricMongoOut = new MongoTrendsOutput(mongoUri, serviceTrends, MongoTrendsOutput.TrendsType.TRENDS_SERVICE, reportId, profilesDate, clearMongo);
+
+        DataSet<Trends> trends = serviceGroupData.map(new MapFunction<ServiceTrends, Trends>() {
+
+            @Override
+            public Trends map(ServiceTrends in) throws Exception {
+                return new Trends(in.getGroup(), in.getService(), in.getFlipflops());
+            }
+        });
+        trends.output(metricMongoOut);
 
     }    //read input from file
 
@@ -136,41 +144,4 @@ public class BatchServiceFlipFlopTrends {
         inputData = env.createInput(inputAvroFormat);
         return inputData;
     }
-
-    //convert the result in bson format
-    public static DataSet<Tuple2<Text, BSONWritable>> convertResultToBSON(DataSet<ServiceTrends> in) {
-
-        return in.map(new MapFunction<ServiceTrends, Tuple2<Text, BSONWritable>>() {
-            int i = 0;
-
-            @Override
-            public Tuple2<Text, BSONWritable> map(ServiceTrends in) throws Exception {
-                BasicDBObject dbObject = new BasicDBObject();
-                dbObject.put("group", in.getGroup().toString());
-                dbObject.put("service", in.getService().toString());
-                dbObject.put("trend", in.getFlipflops());
-
-                BSONWritable bson = new BSONWritable(dbObject);
-                i++;
-                return new Tuple2<Text, BSONWritable>(new Text(String.valueOf(i)), bson);
-                /* TODO */
-            }
-        });
-    }
-
-    //write to mongo db
-    public static void writeToMongo(DataSet<ServiceTrends> data) {
-        String collectionUri = mongoUri + "." + serviceTrends;
-        DataSet<Tuple2<Text, BSONWritable>> result = convertResultToBSON(data);
-        JobConf conf = new JobConf();
-        conf.set("mongo.output.uri", collectionUri);
-
-        MongoOutputFormat<Text, BSONWritable> mongoOutputFormat = new MongoOutputFormat<Text, BSONWritable>();
-        result.output(new HadoopOutputFormat<Text, BSONWritable>(mongoOutputFormat, conf));
-    }
-
-//    public static void createOpTruthTables(String baseUri, String key, String proxy, String operationsId) throws IOException, ParseException {
-//        
-//        opTruthTableMap = Utils.readOperationProfileJson(baseUri, key, proxy, operationsId);
-//    }
 }

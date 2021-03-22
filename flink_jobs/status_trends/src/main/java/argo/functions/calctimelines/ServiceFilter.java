@@ -8,7 +8,6 @@ package argo.functions.calctimelines;
 import argo.pojos.EndpointTrends;
 import argo.profiles.AggregationProfileParser;
 import java.util.ArrayList;
-import java.util.HashMap;
 import org.apache.flink.api.common.functions.FilterFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

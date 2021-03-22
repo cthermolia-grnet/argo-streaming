@@ -35,7 +35,8 @@ public class AggregationProfileParser implements Serializable{
     private HashMap<String, String> functionOperations = new HashMap<>();
     private HashMap<String, ArrayList<String>> serviceFunctions = new HashMap<>();
     private final String url = "/aggregation_profiles";
-   public AggregationProfileParser(String apiUri, String key, String proxy, String aggregationId, String dateStr) throws IOException, ParseException {
+
+    public AggregationProfileParser(String apiUri, String key, String proxy, String aggregationId, String dateStr) throws IOException, ParseException {
 
         String uri = apiUri + url + "/" + aggregationId;
         if (dateStr != null) {
@@ -85,33 +86,29 @@ public class AggregationProfileParser implements Serializable{
                     String serviceoperation = (String) servObject.get("operation");
                     serviceOperations.put(servicename, serviceoperation);
                     services.put(servicename, serviceoperation);
-                   
-                    ArrayList<String> serviceFunctionList=new ArrayList<>();
-                    if(serviceFunctions.get(servicename)!=null){
-                        serviceFunctionList=serviceFunctions.get(servicename);
 
+                    ArrayList<String> serviceFunctionList = new ArrayList<>();
+                    if (serviceFunctions.get(servicename) != null) {
+                        serviceFunctionList = serviceFunctions.get(servicename);
                     }
                     serviceFunctionList.add(groupname);
                     serviceFunctions.put(servicename, serviceFunctionList);
                 }
-              
                 groups.add(new GroupOps(groupname, groupoperation, services));
 
             }
         }
     }
 
-
-    public ArrayList<String> retrieveServiceFunctions(String service){
+    public ArrayList<String> retrieveServiceFunctions(String service) {
         return serviceFunctions.get(service);
-    
+
     }
+
     public String getServiceOperation(String service) {
         return serviceOperations.get(service);
 
     }
-
-
     public String getFunctionOperation(String function) {
         return functionOperations.get(function);
 
@@ -161,8 +158,6 @@ public class AggregationProfileParser implements Serializable{
         this.serviceOperations = serviceOperations;
     }
 
-   
-
     public HashMap<String, String> getFunctionOperations() {
         return functionOperations;
     }
@@ -178,9 +173,12 @@ public class AggregationProfileParser implements Serializable{
     public void setServiceFunctions(HashMap<String, ArrayList<String>> serviceFunctions) {
         this.serviceFunctions = serviceFunctions;
     }
-  
 
     public static class GroupOps implements Serializable {
+<<<<<<< HEAD
+=======
+
+>>>>>>> ARGO-3071 Compute all flip flop trends in one job and add a flag to clear mongo db
         private String name;
         private String operation;
         private HashMap<String, String> services;

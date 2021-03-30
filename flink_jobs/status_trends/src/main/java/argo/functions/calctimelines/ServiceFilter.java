@@ -5,7 +5,6 @@ package argo.functions.calctimelines;
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-
 import argo.pojos.EndpointTrends;
 import argo.profiles.AggregationProfileParser;
 import java.util.ArrayList;

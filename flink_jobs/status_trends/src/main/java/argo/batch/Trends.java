@@ -5,16 +5,12 @@
  */
 package argo.batch;
 
-import argo.pojos.EndpointTrends;
-import argo.pojos.GroupTrends;
-import argo.pojos.MetricTrends;
-import argo.pojos.ServiceTrends;
-
 /**
  *
  * @author cthermolia
  */
 public class Trends {
+
     private String group;
     private String service;
     private String endpoint;
@@ -32,8 +28,6 @@ public class Trends {
         this.status = status;
         this.trends = trends;
     }
-    
-    
 
     public Trends(String group, String service, String endpoint, String metric, int flipflop) {
         this.group = group;
@@ -100,8 +94,7 @@ public class Trends {
     public void setFlipflop(int flipflop) {
         this.flipflop = flipflop;
     }
-    
-    
+
     public String getStatus() {
         return status;
     }
@@ -117,6 +110,5 @@ public class Trends {
     public void setTrends(int trends) {
         this.trends = trends;
     }
-    
-    
+
 }

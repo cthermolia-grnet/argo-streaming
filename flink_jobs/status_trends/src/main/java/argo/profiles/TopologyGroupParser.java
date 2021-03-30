@@ -23,17 +23,18 @@ import org.json.simple.parser.ParseException;
  * TopologyGroupParser, collects data as described in the json received from web
  * api topology group request
  */
-public class TopologyGroupParser implements Serializable{
+
+
+public class TopologyGroupParser implements Serializable {
 
     private HashMap<String, ArrayList<TopologyGroup>> topologyGroupsPerType = new HashMap<>();
     private ArrayList<String> topologyGroups = new ArrayList<>();
     private final String url = "/topology/groups/by_report";
-    //private final String url = "/topology/groups";
+
 
     public TopologyGroupParser() {
     }
 
-    
     public TopologyGroupParser(String apiUri, String key, String proxy, String date, String reportname) throws IOException, ParseException {
         String uri = apiUri + url + "/" + reportname;
         // String uri = apiUri + url;
@@ -111,7 +112,9 @@ public class TopologyGroupParser implements Serializable{
         this.topologyGroups = topologyGroups;
     }
 
-  public class TopologyGroup implements Serializable{
+
+    public class TopologyGroup implements Serializable {
+
         private String group;
         private String type;
         private String subgroup;
@@ -148,9 +151,7 @@ public class TopologyGroupParser implements Serializable{
         }
 
     }
-
     public class Tags implements Serializable{
-
         private String scope;
         private String infrastructure;
         private String certification;
@@ -174,6 +175,7 @@ public class TopologyGroupParser implements Serializable{
         }
 
     }
+
 
     public class Notifications implements Serializable{
 

@@ -10,10 +10,7 @@ import argo.profiles.AggregationProfileParser;
 import argo.profiles.MetricProfileParser;
 import argo.profiles.TopologyEndpointParser;
 import argo.profiles.TopologyGroupParser;
-import java.util.ArrayList;
-import java.util.HashMap;
 import org.apache.flink.api.common.functions.FilterFunction;
-//import org.apache.flink.api.common.functions.RichFilterFunction;
 
 /**
  *
@@ -33,7 +30,6 @@ public class TopologyMetricFilter implements FilterFunction<MetricData> {
         this.metricProfileParser = metricProfileParser;
         this.topologyEndpointParser = topologyEndpointParser;
         this.topologyGroupParser = topologyGroupParser;
-
         this.aggregationProfileParser = aggregationProfileParser;
     }
     @Override
@@ -45,7 +41,6 @@ public class TopologyMetricFilter implements FilterFunction<MetricData> {
             hasGroup = true;
         }
         if (hasGroup && metricProfileParser.containsMetric(t.getService().toString(), t.getMetric().toString())) {
-
 
             return true;
         }

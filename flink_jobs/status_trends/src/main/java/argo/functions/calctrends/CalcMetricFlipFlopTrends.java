@@ -12,7 +12,7 @@ import argo.profiles.AggregationProfileParser;
 import argo.profiles.TopologyEndpointParser;
 import argo.utils.Utils;
 import java.util.Date;
-import java.util.HashMap;
+
 import java.util.TreeMap;
 import org.apache.flink.api.common.functions.GroupReduceFunction;
 import org.apache.flink.util.Collector;
@@ -25,14 +25,9 @@ import org.apache.flink.util.Collector;
  */
 public class CalcMetricFlipFlopTrends implements GroupReduceFunction<MetricData, MetricTrends> {
 
-    //private HashMap<String, String> groupEndpoints;
     private final String format = "yyyy-MM-dd'T'HH:mm:ss'Z'";
     private TopologyEndpointParser topologyEndpointParser;
     private AggregationProfileParser aggregationProfileParser;
-//
-//    public CalcMetricFlipFlopTrends(HashMap<String, String> groupEndpoints) {
-//        this.groupEndpoints = groupEndpoints;
-//    }
 
     public CalcMetricFlipFlopTrends(TopologyEndpointParser topologyEndpointParser, AggregationProfileParser aggregationProfileParser) {
         this.topologyEndpointParser = topologyEndpointParser;

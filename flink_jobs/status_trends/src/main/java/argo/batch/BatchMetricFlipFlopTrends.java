@@ -52,7 +52,6 @@ public class BatchMetricFlipFlopTrends {
 
     static Logger LOG = LoggerFactory.getLogger(BatchMetricFlipFlopTrends.class);
 
-
     private static DataSet<MetricData> yesterdayData;
     private static DataSet<MetricData> todayData;
     private static Integer rankNum;
@@ -68,6 +67,7 @@ public class BatchMetricFlipFlopTrends {
    private static boolean clearMongo=false;
 
 
+
     public static void main(String[] args) throws Exception {
         // set up the batch execution environment
         final ExecutionEnvironment env = ExecutionEnvironment.getExecutionEnvironment();
@@ -78,16 +78,19 @@ public class BatchMetricFlipFlopTrends {
             System.exit(0);
         }
 
+
          if(params.get("clearMongo")!=null && params.getBoolean("clearMongo")==true){
             clearMongo=true;
         }
 
         profilesDate = Utils.getParameterDate(format, params.getRequired("date"));
         env.setParallelism(1);
+
         mongoUri = params.getRequired("mongoUri");
         if (params.get("N") != null) {
             rankNum = params.getInt("N");
         }
+
         reportId = params.getRequired("reportId");
 
         profilesLoader = new ProfilesLoader(params);
@@ -95,7 +98,7 @@ public class BatchMetricFlipFlopTrends {
         todayData = readInputData(env, params.getRequired("todayData"));
 
         calcFlipFlops();
-     
+
 // execute program
         env.execute("Flink Batch Java API Skeleton");
     }
@@ -103,7 +106,7 @@ public class BatchMetricFlipFlopTrends {
     // filter yesterdaydata and exclude the ones not contained in topology and metric profile data and get the last timestamp data for each service endpoint metric
     // filter todaydata and exclude the ones not contained in topology and metric profile data , union yesterday data and calculate status changes for each service endpoint metric
     // rank results
-//    private static DataSet<MetricTrends> calcFlipFlops() {
+
     private static void calcFlipFlops() {
 
        DataSet<MetricData> filteredYesterdayData = yesterdayData.filter(new TopologyMetricFilter(profilesLoader.getMetricProfileParser(), profilesLoader.getTopologyEndpointParser(), profilesLoader.getTopolGroupParser(), profilesLoader.getAggregationProfileParser())).groupBy("hostname", "service", "metric").reduceGroup(new CalcLastTimeStatus());
@@ -126,7 +129,7 @@ public class BatchMetricFlipFlopTrends {
             }
         });
         trends.output(metricMongoOut);
-       
+
     }
     //read input from file
 
@@ -138,6 +141,4 @@ public class BatchMetricFlipFlopTrends {
         inputData = env.createInput(inputAvroFormat);
         return inputData;
     }
-
-   
 }

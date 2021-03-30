@@ -37,8 +37,6 @@ public class Utils {
         return profileDate;
 
     }
-
-    
     public static String convertDateToString(String format, Date date) throws ParseException {
 
         //String format = "yyyy-MM-dd'T'HH:mm:ss'Z'";

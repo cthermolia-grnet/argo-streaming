@@ -20,8 +20,8 @@ import org.json.simple.parser.ParseException;
  * @author cthermolia AggregationProfileParser, collects data as described in
  * the json received from web api aggregation profiles request
  */
-
 public class AggregationProfileParser implements Serializable {
+
     private String id;
     private String date;
     private String name;
@@ -31,7 +31,6 @@ public class AggregationProfileParser implements Serializable {
     private String profileOp;
     private String[] metricProfile = new String[2];
     private ArrayList<GroupOps> groups = new ArrayList<>();
-
     private HashMap<String, String> serviceOperations = new HashMap<>();
     private HashMap<String, String> functionOperations = new HashMap<>();
     private HashMap<String, ArrayList<String>> serviceFunctions = new HashMap<>();
@@ -40,7 +39,6 @@ public class AggregationProfileParser implements Serializable {
     public AggregationProfileParser() {
     }
 
-    
     public AggregationProfileParser(String apiUri, String key, String proxy, String aggregationId, String dateStr) throws IOException, ParseException {
 
         String uri = apiUri + url + "/" + aggregationId;
@@ -57,7 +55,7 @@ public class AggregationProfileParser implements Serializable {
 
         JSONArray dataList = (JSONArray) jsonObject.get("data");
 
-       JSONObject dataObject = (JSONObject) dataList.get(0);
+        JSONObject dataObject = (JSONObject) dataList.get(0);
 
         id = (String) dataObject.get("id");
         date = (String) dataObject.get("date");
@@ -85,7 +83,7 @@ public class AggregationProfileParser implements Serializable {
                 JSONArray serviceArray = (JSONArray) groupObject.get("services");
                 Iterator<JSONObject> serviceiterator = serviceArray.iterator();
                 HashMap<String, String> services = new HashMap<>();
-                 while (serviceiterator.hasNext()) {
+                while (serviceiterator.hasNext()) {
                     JSONObject servObject = (JSONObject) serviceiterator.next();
                     String servicename = (String) servObject.get("name");
                     String serviceoperation = (String) servObject.get("operation");
@@ -95,11 +93,12 @@ public class AggregationProfileParser implements Serializable {
                     ArrayList<String> serviceFunctionList = new ArrayList<>();
                     if (serviceFunctions.get(servicename) != null) {
                         serviceFunctionList = serviceFunctions.get(servicename);
-                   }
+
+                    }
                     serviceFunctionList.add(groupname);
                     serviceFunctions.put(servicename, serviceFunctionList);
                 }
-              groups.add(new GroupOps(groupname, groupoperation, services));
+                groups.add(new GroupOps(groupname, groupoperation, services));
 
             }
         }
@@ -107,16 +106,16 @@ public class AggregationProfileParser implements Serializable {
 
     public ArrayList<String> retrieveServiceFunctions(String service) {
         return serviceFunctions.get(service);
-
-   }
+    }
+   
+    
 
     public String getServiceOperation(String service) {
         return serviceOperations.get(service);
 
     }
 
- public String getFunctionOperation(String function) {
-
+    public String getFunctionOperation(String function) {
         return functionOperations.get(function);
 
     }
@@ -164,6 +163,7 @@ public class AggregationProfileParser implements Serializable {
     public void setServiceOperations(HashMap<String, String> serviceOperations) {
         this.serviceOperations = serviceOperations;
     }
+
     public HashMap<String, String> getFunctionOperations() {
         return functionOperations;
     }
@@ -179,6 +179,7 @@ public class AggregationProfileParser implements Serializable {
     public void setServiceFunctions(HashMap<String, ArrayList<String>> serviceFunctions) {
         this.serviceFunctions = serviceFunctions;
     }
+
     public static class GroupOps implements Serializable {
 
         private String name;

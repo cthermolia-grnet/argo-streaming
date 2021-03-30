@@ -52,7 +52,6 @@ import argo.profiles.ProfilesLoader;
 public class BatchStatusTrends {
 
     static Logger LOG = LoggerFactory.getLogger(BatchStatusTrends.class);
-
     private static DataSet<MetricData> yesterdayData;
     private static DataSet<MetricData> todayData;
     private static Integer rankNum;
@@ -63,7 +62,6 @@ public class BatchStatusTrends {
 
     private static String mongoUri;
     private static ProfilesLoader profilesLoader;
-
     private static String reportId;
     private static String profilesDate;
     private static String format = "yyyy-MM-dd";
@@ -76,6 +74,7 @@ public class BatchStatusTrends {
 
         final ParameterTool params = ParameterTool.fromArgs(args);
         //check if all required parameters exist and if not exit program
+
         if (!Utils.checkParameters(params, "yesterdayData", "todayData", "apiUri", "key", "date", "reportId")) {
             System.exit(0);
         }
@@ -84,11 +83,12 @@ public class BatchStatusTrends {
         if (params.get("clearMongo") != null && params.getBoolean("clearMongo") == true) {
             clearMongo = true;
         }
+ 
         profilesDate = Utils.getParameterDate(format, params.getRequired("date"));
         if (params.get("N") != null) {
             rankNum = params.getInt("N");
         }
-        reportId = params.getRequired("reportId");
+        reportId=params.getRequired("reportId");
         mongoUri = params.get("mongoUri");
 
         profilesLoader = new ProfilesLoader(params);
@@ -112,8 +112,7 @@ public class BatchStatusTrends {
 
         DataSet<MetricData> filteredTodayData = todayData.filter(new TopologyMetricFilter(profilesLoader.getMetricProfileParser(), profilesLoader.getTopologyEndpointParser(), profilesLoader.getTopolGroupParser(), profilesLoader.getAggregationProfileParser()));
         DataSet<Tuple6<String, String, String, String, String, Integer>> rankedData = filteredTodayData.union(filteredYesterdayData).groupBy("hostname", "service", "metric").reduceGroup(new CalcStatusTrends(profilesLoader.getTopologyEndpointParser(), profilesLoader.getAggregationProfileParser()));
-
-        return rankedData;
+     return rankedData;
     }
 
     // filter the data based on status (CRITICAL,WARNING,UNKNOWN), rank and write top N in seperate files for each status
@@ -150,6 +149,4 @@ public class BatchStatusTrends {
         inputData = env.createInput(inputAvroFormat);
         return inputData;
     }
-
-
 }

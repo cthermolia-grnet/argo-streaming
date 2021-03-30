@@ -9,7 +9,7 @@ package argo.functions.calctimelines;
 import argo.pojos.ServiceTrends;
 import argo.profiles.AggregationProfileParser;
 import java.util.ArrayList;
-import java.util.HashMap;
+
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.util.Collector;
 
@@ -21,11 +21,10 @@ import org.apache.flink.util.Collector;
  */
 
 
+
 public class MapServices implements FlatMapFunction<ServiceTrends, ServiceTrends> {
 
     private AggregationProfileParser aggregationProfileParser;
-
-    private HashMap<String, ArrayList<String>> serviceFunctions;
 
     public MapServices(AggregationProfileParser aggregationProfileParser) {
         this.aggregationProfileParser = aggregationProfileParser;

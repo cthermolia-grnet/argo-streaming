@@ -4,49 +4,69 @@
  * and open the template in the editor.
  */
 package argo.profiles;
+
 import argo.utils.RequestManager;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import java.io.IOException;
 import org.apache.flink.api.java.utils.ParameterTool;
-import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
 
 /**
  *
  * @author cthermolia
- * 
- * ProfilesLoader, loads all the parser that will be used to collect the information from the web api
+ *
+ * ProfilesLoader, loads all the parser that will be used to collect the
+ * information from the web api
  */
 public class ProfilesLoader {
 
     private ReportParser reportParser;
-    private TopologyEndpointParser topologyEndpointParser;
-    private MetricProfileParser metricProfileParser;
+    private EndpointGroupManager topologyEndpointParser;
+    private MetricProfileManager metricProfileParser;
+
     private OperationsParser operationParser;
-    private AggregationProfileParser aggregationProfileParser;
+    private AggregationProfileManager aggregationProfileParser;
     private TopologyGroupParser topolGroupParser;
+
+    private String aggregationId;
+    private String metricId;
+    private String operationsId;
 
     public ProfilesLoader() {
     }
 
-    
     public ProfilesLoader(ParameterTool params) throws IOException, ParseException {
 
         reportParser = new ReportParser(params.getRequired("apiUri"), params.getRequired("key"), params.get("proxy"), params.getRequired("reportId"));
         String[] reportInfo = reportParser.getTenantReport().getInfo();
-        topolGroupParser = new TopologyGroupParser(params.getRequired("apiUri"), params.getRequired("key"), params.get("proxy"), params.getRequired("date"),reportInfo[0]);
-        topologyEndpointParser = new TopologyEndpointParser(params.getRequired("apiUri"), params.getRequired("key"), params.get("proxy"),  params.getRequired("date"),reportInfo[0]);
-       
-        String aggregationId = reportParser.getAggregationReportId();
-        String metricId = reportParser.getMetricReportId();
-        String operationsId = reportParser.getOperationReportId();
+        topolGroupParser = new TopologyGroupParser(params.getRequired("apiUri"), params.getRequired("key"), params.get("proxy"), params.getRequired("date"), reportInfo[0]);
+  
+         aggregationId = reportParser.getAggregationReportId();
+         metricId = reportParser.getMetricReportId();
+         operationsId = reportParser.getOperationReportId();
 
-        aggregationProfileParser = new AggregationProfileParser(params.getRequired("apiUri"), params.getRequired("key"), params.get("proxy"), aggregationId, params.get("date"));
-        metricProfileParser = new MetricProfileParser(params.getRequired("apiUri"), params.getRequired("key"), params.get("proxy"), metricId, params.get("date"));
-        JsonElement opProfileJson=RequestManager.operationsProfileRequest(params.getRequired("apiUri"),  operationsId, params.getRequired("key"), params.get("proxy"),  params.get("date"));
-      
+        JsonElement opProfileJson = RequestManager.operationsProfileRequest(params.getRequired("apiUri"), operationsId, params.getRequired("key"), params.get("proxy"), params.get("date"));
+
         operationParser = new OperationsParser();
         operationParser.readJson(opProfileJson);
+
+        JsonElement metricProfileJson = RequestManager.metricProfileRequest(params.getRequired("apiUri"), metricId, params.getRequired("key"), params.get("proxy"), params.get("date"));
+
+        metricProfileParser = new MetricProfileManager();
+        metricProfileParser.loadMetricProfile(metricProfileJson);
+
+        JsonElement aggregationProfileJson = RequestManager.aggregationProfileRequest(params.getRequired("apiUri"), aggregationId, params.getRequired("key"), params.get("proxy"), params.get("date"));
+
+        aggregationProfileParser = new AggregationProfileManager();
+        aggregationProfileParser.readJson(aggregationProfileJson);
+        
+        
+         JsonArray endpointGroupProfileJson = RequestManager.endpointGroupProfileRequest(params.getRequired("apiUri"),  params.getRequired("key"), params.get("proxy"), reportInfo[0],params.get("date"));
+
+        topologyEndpointParser = new EndpointGroupManager();
+        topologyEndpointParser.loadGroupEndpointProfile(endpointGroupProfileJson);
+
 
     }
 
@@ -58,19 +78,19 @@ public class ProfilesLoader {
         this.reportParser = reportParser;
     }
 
-    public TopologyEndpointParser getTopologyEndpointParser() {
+    public EndpointGroupManager getTopologyEndpointParser() {
         return topologyEndpointParser;
     }
 
-    public void setTopologyEndpointParser(TopologyEndpointParser topologyEndpointParser) {
+    public void setTopologyEndpointParser(EndpointGroupManager topologyEndpointParser) {
         this.topologyEndpointParser = topologyEndpointParser;
     }
 
-    public MetricProfileParser getMetricProfileParser() {
+    public MetricProfileManager getMetricProfileParser() {
         return metricProfileParser;
     }
 
-    public void setMetricProfileParser(MetricProfileParser metricProfileParser) {
+    public void setMetricProfileParser(MetricProfileManager metricProfileParser) {
         this.metricProfileParser = metricProfileParser;
     }
 
@@ -82,11 +102,10 @@ public class ProfilesLoader {
         this.operationParser = operationParser;
     }
 
-    public AggregationProfileParser getAggregationProfileParser() {
+    public AggregationProfileManager getAggregationProfileParser() {
         return aggregationProfileParser;
     }
-
-    public void setAggregationProfileParser(AggregationProfileParser aggregationProfileParser) {
+    public void setAggregationProfileParser(AggregationProfileManager aggregationProfileParser) {
         this.aggregationProfileParser = aggregationProfileParser;
     }
 
@@ -97,6 +116,29 @@ public class ProfilesLoader {
     public void setTopolGroupParser(TopologyGroupParser topolGroupParser) {
         this.topolGroupParser = topolGroupParser;
     }
-    
+
+    public String getAggregationId() {
+        return aggregationId;
+    }
+
+    public void setAggregationId(String aggregationId) {
+        this.aggregationId = aggregationId;
+    }
+
+    public String getMetricId() {
+        return metricId;
+    }
+
+    public void setMetricId(String metricId) {
+        this.metricId = metricId;
+    }
+
+    public String getOperationsId() {
+        return operationsId;
+    }
+
+    public void setOperationsId(String operationsId) {
+        this.operationsId = operationsId;
+    }
 
 }

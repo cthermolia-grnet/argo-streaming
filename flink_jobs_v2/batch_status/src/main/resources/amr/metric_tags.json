@@ -1,0 +1,1 @@
+{"date":"2021-11-1","name":"metric_tags","metric_tags":[{"metric_name":"org.nagios.GridFTP-Check","tags":[{"name":"tag1"},{"name":"tag2"}]},{"metric_name":"org.nagios.BDII-Check","tags":[{"name":"tag1"},{"name":"tag3"}]}]}

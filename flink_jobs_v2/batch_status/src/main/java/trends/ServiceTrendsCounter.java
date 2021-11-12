@@ -1,8 +1,5 @@
 package trends;
 
-
-
-import argo.batch.StatusMetricTimeline;
 import argo.flipflops.ServiceTrends;
 import java.io.IOException;
 import java.util.List;

@@ -1,7 +1,6 @@
 package argo.batch;
 
 import org.slf4j.LoggerFactory;
-
 import argo.amr.ApiResource;
 import argo.amr.ApiResourceManager;
 import argo.ar.CalcEndpointAR;
@@ -18,7 +17,6 @@ import argo.avro.MetricProfile;
 import argo.avro.Weight;
 import argo.flipflops.ServiceTrends;
 import argo.flipflops.ZeroServiceTrendsFilter;
-import argo.trends.EndpointTrendsCounter;
 import flipflops.CalcEndpointFlipFlopTrends;
 import flipflops.CalcGroupFlipFlopTrends;
 import flipflops.CalcMetricFlipFlopTrends;
@@ -36,23 +34,20 @@ import flipflops.Trends;
 import flipflops.ZeroEndpointTrendsFilter;
 import flipflops.ZeroGroupTrendsFilter;
 import flipflops.ZeroMetricTrendsFilter;
-
 import org.slf4j.Logger;
-
 import java.util.List;
 import org.apache.flink.api.common.functions.MapFunction;
-
 import org.apache.flink.api.common.operators.Order;
 import org.apache.flink.api.java.DataSet;
 import org.apache.flink.api.java.ExecutionEnvironment;
 import org.apache.flink.api.java.io.AvroInputFormat;
 import org.apache.flink.api.java.operators.DataSource;
 import org.apache.flink.api.java.tuple.Tuple7;
-
 import org.apache.flink.api.java.utils.ParameterTool;
-
+import org.apache.flink.core.fs.FileSystem;
 import org.apache.flink.core.fs.Path;
 import profilesmanager.ReportManager;
+import trends.EndpointTrendsCounter;
 import trends.GroupTrendsCounter;
 import trends.MetricTrendsCounter;
 import trends.ServiceTrendsCounter;
@@ -157,6 +152,8 @@ public class ArgoStatusBatch {
         DataSource<String> cfgDS = env.fromElements(amr.getResourceJSON(ApiResource.CONFIG));
         DataSource<String> opsDS = env.fromElements(amr.getResourceJSON(ApiResource.OPS));
         DataSource<String> apsDS = env.fromElements(amr.getResourceJSON(ApiResource.AGGREGATION));
+        //  DataSource<String> mtagsDS = env.fromElements(amr.getResourceJSON(ApiResource.MTAGS));
+        DataSource<String> mtagsDS = env.readTextFile(ArgoStatusBatch.class.getResource("/amr/metric_tags.json").getFile());
         DataSource<String> recDS = env.fromElements("");
         if (amr.getResourceJSON(ApiResource.RECOMPUTATIONS) != null) {
             recDS = env.fromElements(amr.getResourceJSON(ApiResource.RECOMPUTATIONS));
@@ -179,7 +176,11 @@ public class ArgoStatusBatch {
             // grab information about thresholds rules from argo-web-api
             thrDS = env.fromElements(amr.getResourceJSON(ApiResource.THRESHOLDS));
         }
-
+        // check if report information from argo-web-api contains a threshold profile ID
+        if (!amr.getThresholdsID().equalsIgnoreCase("")) {
+            // grab information about thresholds rules from argo-web-api
+            thrDS = env.fromElements(amr.getResourceJSON(ApiResource.THRESHOLDS));
+        }
         ReportManager confMgr = new ReportManager();
         confMgr.loadJsonString(cfgDS.collect());
 
@@ -234,6 +235,7 @@ public class ArgoStatusBatch {
         // data
         DataSet<StatusMetric> mdataTotalDS = mdataTrimDS.union(fillMissDS);
 
+        //   mdataTotalDS = mdataTotalDS.flatMap(new MapServices()).withBroadcastSet(apsDS, "aps").withBroadcastSet(mtagsDS, "mtags");
         mdataTotalDS = mdataTotalDS.flatMap(new MapServices()).withBroadcastSet(apsDS, "aps");
         dbURI = params.getRequired("mongo.uri");
         String dbMethod = params.getRequired("mongo.method");
@@ -412,6 +414,14 @@ public class ArgoStatusBatch {
                 filterByStatusAndWriteMongo(MongoTrendsOutput.TrendsType.TRENDS_STATUS_GROUP, "status_trends_groups", groupStatusTrendsData, "warning");
                 filterByStatusAndWriteMongo(MongoTrendsOutput.TrendsType.TRENDS_STATUS_GROUP, "status_trends_groups", groupStatusTrendsData, "unknown");
             }
+
+        }
+
+        boolean calcTags = true;
+        if (calcTags) {
+            DataSet<StatusTimeline> statusMetricTimelineTags = statusMetricTimeline.flatMap(new FlatMapTagTimeline()).withBroadcastSet(mtagsDS, "mtags");
+            //  DataSet<StatusTimeline> statusMetricTimelineTags = statusMetricTimeline.flatMap(new FlatMapTagTimeline());
+            statusMetricTimelineTags.writeAsText("/home/cthermolia/avro/tags.txt", FileSystem.WriteMode.OVERWRITE);
 
         }
         // Create a job title message to discern job in flink dashboard/cli

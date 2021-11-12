@@ -19,6 +19,7 @@ public class StatusTimeline implements Serializable {
     private String service;
     private String hostname;
     private String metric;
+   private String tag;
     ArrayList<TimeStatus> timestamps;
 
     public StatusTimeline() {
@@ -37,6 +38,26 @@ public class StatusTimeline implements Serializable {
         this.metric = metric;
         this.timestamps = timestamps;
     }
+
+    public StatusTimeline(String group, String function, String service, String hostname, String metric, String tag, ArrayList<TimeStatus> timestamps) {
+        this.group = group;
+        this.function = function;
+        this.service = service;
+        this.hostname = hostname;
+        this.metric = metric;
+        this.tag = tag;
+        this.timestamps = timestamps;
+    }
+
+    public String getTag() {
+        return tag;
+    }
+
+    public void setTag(String tag) {
+        this.tag = tag;
+    }
+
+
 
     public String getGroup() {
         return group;
@@ -96,7 +117,7 @@ public class StatusTimeline implements Serializable {
         for (TimeStatus st : timestamps) {
             resultsTimeStatus += st.toString();
         }
-        return "StatusTimeline{" + "group=" + group + ", service=" + service + ", hostname=" + hostname + ", metric=" + metric + ", statusMetrics=" + resultsStatusMetrics + ", timestamps=" + resultsTimeStatus + '}';
+        return "StatusTimeline{" + "group=" + group + ", service=" + service + ", hostname=" + hostname + ", metric=" + metric + ", tag="+tag +", statusMetrics=" + resultsStatusMetrics + ", timestamps=" + resultsTimeStatus + '}';
     }
 
 }

@@ -1,0 +1,37 @@
+{
+    "status": {
+        "message": "Success",
+        "code": "200"
+    },
+    "data": [
+        {
+            "date": "2021-01-25",
+
+            "metric_tags": [
+                {
+                    "metric_name": "org.nagios.GridFTP-Check",
+                    "tags": [
+                        {
+                            "name": "tag1"
+                        },
+                        {
+                            "name": "tag2"
+                        }
+                    ]
+                },
+                {
+                    "metric_name": "org.nagios.BDII-Check",
+                    "tags": [
+                        {
+                            "name": "tag1"
+                        },
+                        {
+                            "name": "tag3"
+                        }
+                    ]
+                }
+
+            ]
+        }]
+}
+  

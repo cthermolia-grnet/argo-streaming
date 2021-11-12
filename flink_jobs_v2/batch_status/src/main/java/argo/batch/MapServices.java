@@ -1,10 +1,13 @@
 package argo.batch;
+
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import org.apache.flink.api.common.functions.RichFlatMapFunction;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.util.Collector;
 import profilesmanager.AggregationProfileManager;
+import profilesmanager.MetricTagsManager;
 
 /**
  * MapServices produces TimelineTrends for each service,that maps to the groups
@@ -14,11 +17,14 @@ public class MapServices extends RichFlatMapFunction<StatusMetric, StatusMetric>
 
     //private AggregationProfileParser aggregationProfileParser;
     public MapServices() {
-
+        
     }
-
+    
     private List<String> aps;
     private AggregationProfileManager apsMgr;
+//    private List<String> mtags;
+//    private MetricTagsManager mtagsMgr;
+//    
     @Override
     public void open(Configuration parameters) throws IOException {
 
@@ -28,8 +34,13 @@ public class MapServices extends RichFlatMapFunction<StatusMetric, StatusMetric>
         // Initialize aggregation profile manager
         this.apsMgr = new AggregationProfileManager();
         this.apsMgr.loadJsonString(aps);
-        // Initialize operations manager      
-
+        // Initialize operations manager
+//        this.mtags = getRuntimeContext().getBroadcastVariable("mtags");
+//
+//        // Initialize aggregation profile manager
+//        this.mtagsMgr = new MetricTagsManager();
+//        this.mtagsMgr.loadJsonString(mtags);
+//        
     }
 
     /**
@@ -44,13 +55,16 @@ public class MapServices extends RichFlatMapFunction<StatusMetric, StatusMetric>
     @Override
     public void flatMap(StatusMetric t, Collector<StatusMetric> out) throws Exception {
         String service = t.getService();
-
-        String function = this.apsMgr.retrieveFunctionsByService(service);
-
-        StatusMetric newT = t;
-        newT.setFunction(function);
-        out.collect(newT);
-
+     //   ArrayList<String> tags = this.mtagsMgr.getTags(t.getMetric());
+       // for (String tag : tags) {
+            
+            String function = this.apsMgr.retrieveFunctionsByService(service);
+            
+            StatusMetric newT = t;
+            newT.setFunction(function);
+          //  newT.setTag(tag);
+            out.collect(newT);
+        //}
     }
-
+    
 }

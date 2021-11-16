@@ -99,6 +99,11 @@ public class MongoStatusOutput implements OutputFormat<StatusMetric> {
 	 * Service or Endpoint Group ones.       
 	 */
 	private Document prepDoc(StatusMetric record) {
+	
+	           String hasThr = "NO";
+            if (record.getHasThr()) {
+                hasThr = "YES";
+            }    
 		Document doc = new Document("report",this.report)
 				.append("endpoint_group", record.getGroup());
 				
@@ -148,8 +153,8 @@ public class MongoStatusOutput implements OutputFormat<StatusMetric> {
 		
 		doc.append("status",record.getStatus())
 				.append("timestamp",record.getTimestamp())
-				.append("date_integer",record.getDateInt());
-		
+				.append("date_integer",record.getDateInt())
+		                .append("has_threshold_rule", hasThr);
 		return doc;
 	}
 	

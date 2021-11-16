@@ -1,4 +1,4 @@
-package trends;
+package trends.status;
 
 /**
  *

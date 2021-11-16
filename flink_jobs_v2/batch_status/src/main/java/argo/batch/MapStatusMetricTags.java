@@ -13,14 +13,14 @@ import profilesmanager.MetricTagsManager;
  * correspond to the metric
  */
 public class MapStatusMetricTags extends RichFlatMapFunction<StatusMetric, StatusMetric> {
-
+    
     public MapStatusMetricTags() {
-
+        
     }
-
+    
     List<String> mtags;
     private MetricTagsManager mtagsMgr;
-
+    
     @Override
     public void open(Configuration parameters) throws IOException {
         // Initialize MetricTags manager          
@@ -51,8 +51,12 @@ public class MapStatusMetricTags extends RichFlatMapFunction<StatusMetric, Statu
         }
         StatusMetric newT = t;
         newT.setTags(tagInfo);
+        if (!t.getOgStatus().equals("")) {
+            newT.setHasThr(true);
+        }        
+        
         out.collect(newT);
-
+        
     }
-
+    
 }

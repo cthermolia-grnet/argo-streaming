@@ -10,6 +10,8 @@ import com.mongodb.MongoClientURI;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
+import java.util.ArrayList;
+import java.util.List;
 import org.bson.conversions.Bson;
 
 /**
@@ -110,14 +112,28 @@ public class MongoTrendsOutput implements OutputFormat<Trends> {
                 doc.append("flipflop", record.getFlipflop());
                 break;
             case TRENDS_METRIC:
+                String[] tagsArr = record.getTags().split(",");
+                List<String> tags = new ArrayList<String>();
+                for (int i = 0; i < tagsArr.length; i++) {
+                    tags.add(tagsArr[i]);
+
+                }
+
                 doc.append("group", record.getGroup());
                 doc.append("service", record.getService());
                 doc.append("endpoint", record.getEndpoint());
                 doc.append("metric", record.getMetric());
-                doc.append("tags", record.getTags());
+                doc.append("tags", tags);
                 doc.append("flipflop", record.getFlipflop());
                 break;
             case TRENDS_STATUS_METRIC:
+                tagsArr = record.getTags().split(",");
+                tags = new ArrayList<String>();
+                for (int i = 0; i < tagsArr.length; i++) {
+                    tags.add(tagsArr[i]);
+
+                }
+
                 doc.append("group", record.getGroup());
                 doc.append("service", record.getService());
                 doc.append("endpoint", record.getEndpoint());
@@ -125,7 +141,7 @@ public class MongoTrendsOutput implements OutputFormat<Trends> {
                 doc.append("status", record.getStatus());
                 doc.append("duration", record.getDuration());
                 doc.append("trends", record.getTrends());
-                doc.append("tags", record.getTags());
+                doc.append("tags",tags);
                 break;
             case TRENDS_STATUS_ENDPOINT:
                 doc.append("group", record.getGroup());

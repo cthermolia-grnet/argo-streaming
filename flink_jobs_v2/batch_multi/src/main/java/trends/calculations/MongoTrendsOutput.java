@@ -7,16 +7,21 @@ import org.apache.flink.configuration.Configuration;
 import org.bson.Document;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
+import java.util.ArrayList;
 import java.util.Arrays;
 import org.bson.conversions.Bson;
+import org.bson.types.ObjectId;
 
 /**
  * MongoTrendsOutput for storing trends data to mongodb
  */
 public class MongoTrendsOutput implements OutputFormat<Trends> {
+
+    private ArrayList<ObjectId> documentIds = new ArrayList<>();
 
     // Select the type of status input
     public enum TrendsType {
@@ -65,15 +70,6 @@ public class MongoTrendsOutput implements OutputFormat<Trends> {
         this.trendsType = trendsType;
         this.report = report;
         this.clearMongo = clearMongo;
-    }
-
-    private void initMongo() {
-        this.mClient = new MongoClient(mongoHost, mongoPort);
-        this.mDB = mClient.getDatabase(dbName);
-        this.mCol = mDB.getCollection(colName);
-        if (this.clearMongo) {
-            deleteDoc();
-        }
     }
 
     /**
@@ -160,10 +156,26 @@ public class MongoTrendsOutput implements OutputFormat<Trends> {
         return doc;
     }
 
-    private void deleteDoc() {
+    private void initMongo() {
+        this.mClient = new MongoClient(mongoHost, mongoPort);
+        this.mDB = mClient.getDatabase(dbName);
+        this.mCol = mDB.getCollection(colName);
+        if (this.clearMongo) {
+            retrieveExistingDocs();
+        }
+    }
 
+    private void retrieveExistingDocs() {
         Bson filter = Filters.and(Filters.eq("report", this.report), Filters.eq("date", this.date));
-        mCol.deleteMany(filter);
+        FindIterable<Document> documents = this.mCol.find(filter);
+        for (Document doc : documents) {
+            this.documentIds.add((ObjectId) doc.get("_id"));
+        }
+
+    }
+
+    private void deleteDoc() {
+        this.mCol.deleteMany(Filters.in("_id", this.documentIds));
     }
 
     /**
@@ -184,6 +196,9 @@ public class MongoTrendsOutput implements OutputFormat<Trends> {
      */
     @Override
     public void close() throws IOException {
+        if (this.clearMongo) {
+            deleteDoc();
+        }
         if (mClient != null) {
             mClient.close();
             mClient = null;

@@ -49,6 +49,7 @@ import argo.avro.Downtime;
 import argo.avro.GroupEndpoint;
 import argo.avro.MetricData;
 import argo.avro.MetricProfile;
+import java.text.SimpleDateFormat;
 import org.apache.commons.lang.StringUtils;
 import org.apache.flink.api.common.JobID;
 import org.apache.flink.core.fs.FileSystem;
@@ -101,6 +102,8 @@ public class AmsStreamStatus {
 
     static Logger LOG = LoggerFactory.getLogger(AmsStreamStatus.class);
     private static String runDate;
+    private static String apiToken;    
+    private static String apiEndpoint;
  
     /**
      * Sets configuration parameters to streaming enviroment
@@ -188,8 +191,8 @@ public class AmsStreamStatus {
         String subMetric = parameterTool.getRequired("ams.sub.metric");
 
       
-        String apiEndpoint = parameterTool.getRequired("api.endpoint");
-        String apiToken = parameterTool.getRequired("api.token");
+        apiEndpoint = parameterTool.getRequired("api.endpoint");
+        apiToken = parameterTool.getRequired("api.token");
         String reportID = parameterTool.getRequired("report.uuid");
         int apiInterval = parameterTool.getInt("api.interval");
         runDate = parameterTool.get("run.date");
@@ -209,7 +212,7 @@ public class AmsStreamStatus {
             String strictParam = parameterTool.get("interval.strict");
             strictInterval = getInterval(strictParam);
         }
-        ApiResourceManager amr = new ApiResourceManager(apiEndpoint, apiToken);
+       ApiResourceManager amr = new ApiResourceManager(apiEndpoint, apiToken);
 
         // fetch
         // set params
@@ -494,6 +497,7 @@ public class AmsStreamStatus {
         public int initStatus;
         public int looseInterval;
         public int strictInterval;
+       private   ApiResourceManager amr;
 
         public StatusMap(StatusConfig config, int looseInterval, int strictInterval) {
             LOG.info("Created new Status map");
@@ -514,7 +518,7 @@ public class AmsStreamStatus {
 
             pID = Integer.toString(getRuntimeContext().getIndexOfThisSubtask());
 
-            ApiResourceManager amr = new ApiResourceManager(config.apiEndpoint, config.apiToken);
+            amr = new ApiResourceManager(config.apiEndpoint, config.apiToken);
             amr.setDate(config.runDate);
             amr.setTimeoutSec((int) config.timeout);
             if (config.apiProxy != null) {
@@ -573,6 +577,15 @@ public class AmsStreamStatus {
             String monHost = item.getMonitoringHost();
             String message = item.getMessage();
             String summary = item.getSummary();
+            String dayStamp = tsMon.split("T")[0];
+            
+              if (!sm.checkIfExistDowntime(dayStamp)) {
+                amr = new ApiResourceManager(config.apiEndpoint, config.apiToken);
+                amr.setDate(dayStamp);
+                amr.getRemoteDowntimes();
+                ArrayList<Downtime> downList = new ArrayList<Downtime>(Arrays.asList(amr.getListDowntimes()));
+                sm.addDowntimeSet(dayStamp, downList);
+            }
 
             // if daily generation is enable check if has day changed?
             if (config.daily && sm.hasDayChanged(sm.getTsLatest(), tsMon)) {

@@ -50,8 +50,7 @@ public class RequestManager {
      * @param fullURL String containing the full url representation of the
      * argo-web-api resource
      * @return A string representation of the resource json content
-     * @throws ClientProtocolException
-     * @throws IOException
+      * @throws IOException
      * @throws KeyStoreException
      * @throws NoSuchAlgorithmException
      * @throws KeyManagementException
@@ -81,6 +80,7 @@ public class RequestManager {
         } catch (KeyManagementException | NoSuchAlgorithmException | KeyStoreException | IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
+            return content;
         }
 
         return content;
@@ -128,6 +128,6 @@ public class RequestManager {
     public void setVerify(boolean verify) {
         this.verify = verify;
     }
-    
-    
+
+
 }

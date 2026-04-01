@@ -1,24 +1,17 @@
 package argo.batch;
 
 import java.util.*;
-
 import org.apache.flink.api.common.functions.RichGroupReduceFunction;
-
 import org.apache.flink.api.java.utils.ParameterTool;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.util.Collector;
-import org.apache.hadoop.hdfs.server.namenode.HostFileManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import argo.avro.GroupEndpoint;
 import argo.avro.GroupGroup;
-
 import argo.avro.MetricProfile;
-
 import java.io.IOException;
 import java.text.ParseException;
-
 import org.joda.time.DateTime;
 import profilesmanager.MetricProfileManager;
 import profilesmanager.OperationsManager;
@@ -72,17 +65,12 @@ public class CalcRecomputation extends RichGroupReduceFunction<StatusMetric, Sta
         String endpointGroup = "";
         String hostname = "";
         String metric = "";
-        boolean hasThr = false;
         TreeMap<DateTime, StatusMetric> timeStatusMap = new TreeMap<>();
-        DateTime today = Utils.convertStringtoDate("yyyy-MM-dd", runDate);
-        today = today.withTime(0, 0, 0, 0);
-
 
         for (StatusMetric item : in) {
             service = item.getService();
             endpointGroup = item.getGroup();
             hostname = item.getHostname();
-            function = item.getFunction();
             metric = item.getMetric();
             String ts = item.getTimestamp();
             String[] tsToken = item.getTimestamp().split("Z")[0].split("T");
@@ -92,7 +80,6 @@ public class CalcRecomputation extends RichGroupReduceFunction<StatusMetric, Sta
             timeStatusMap.put(Utils.convertStringtoDate("yyyy-MM-dd'T'HH:mm:ss'Z'", ts), item);
 
         }
-
         ArrayList<RecomputationsManager.RecomputationElement> recompItems = RecomputationsManager.findChangedStatusItem(
                 endpointGroup, // The endpoint group associated with the metric
                 service,       // The service associated with the metric
@@ -100,7 +87,6 @@ public class CalcRecomputation extends RichGroupReduceFunction<StatusMetric, Sta
                 metric,        // The metric for which recomputation is being checked
                 RecomputationsManager.ElementType.METRIC // Element type, indicating this is a metric-related recomputation
         );
-
         if (!recompItems.isEmpty()) { // If a recomputation request is found for this metric
             for (RecomputationsManager.RecomputationElement recompItem : recompItems) {
                 timeStatusMap = RecompTimelineBuilder.calcRecomputationsMetrics(
@@ -111,8 +97,7 @@ public class CalcRecomputation extends RichGroupReduceFunction<StatusMetric, Sta
                 );
             }
         }
-        for (
-                DateTime dt : timeStatusMap.keySet()) {
+        for (DateTime dt : timeStatusMap.keySet()) {
             out.collect(timeStatusMap.get(dt));
         }
     }

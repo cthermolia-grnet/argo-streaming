@@ -1,10 +1,7 @@
 package influxdb.connector;
 
 
-import com.influxdb.client.InfluxDBClient;
-import com.influxdb.client.InfluxDBClientFactory;
-import com.influxdb.client.InfluxDBClientOptions;
-import com.influxdb.client.WriteApi;
+import com.influxdb.client.*;
 import com.influxdb.client.write.Point;
 import com.influxdb.exceptions.InfluxException;
 import okhttp3.OkHttpClient;
@@ -13,13 +10,20 @@ import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
 import java.net.Proxy;
+
 public class InfluxConnection {
 
     private static final Logger LOG = LoggerFactory.getLogger(InfluxConnection.class);
 
     private final InfluxDBClient client;
     private final WriteApi writeApi;
-
+    WriteOptions writeOptions = WriteOptions.builder()
+            .batchSize(5_000)          // try 5k–20k
+            .flushInterval(2_000)      // ms
+            .bufferLimit(100_000)
+            .retryInterval(5_000)
+            .maxRetries(3)
+            .build();
     public InfluxConnection(String url, String token, String org, String bucket,String proxy,int proxyPort) {
 
         InfluxDBClientOptions options;
@@ -52,7 +56,7 @@ public class InfluxConnection {
         }
 
         // Create WriteApi ONCE
-        this.writeApi = client.makeWriteApi();
+        this.writeApi = client.makeWriteApi(writeOptions);
 
         LOG.info("InfluxDB connection initialized");
     }
@@ -63,6 +67,7 @@ public class InfluxConnection {
     public void write(Point point) {
         try {
             writeApi.writePoint(point);
+            System.out.println("WRITE TO INFLUX---");
            } catch (InfluxException e) {
             LOG.error("ERROR WRITE TO INFLUX", e);
         }

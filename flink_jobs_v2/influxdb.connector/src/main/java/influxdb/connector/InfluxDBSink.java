@@ -70,12 +70,12 @@ public class InfluxDBSink extends RichSinkFunction<Point> implements Serializabl
     }
 
     @Override
-    public void close(){
-
-        this.client.close();
-
+    public void close() {
+        if (connection != null) {
+            connection.flush();
+            connection.close();
+        }
     }
-
     public String getOrg() {
         return org;
     }

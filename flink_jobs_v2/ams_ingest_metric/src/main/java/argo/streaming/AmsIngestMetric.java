@@ -262,7 +262,7 @@ public class AmsIngestMetric {
                     .flatMap(new PerformanceDataFlatMap(tenant)).setParallelism(1);
 
             InfluxDBSink sink = new InfluxDBSink(parameterTool);
-            perfData.addSink(sink);
+           // perfData.addSink(sink);
 
         }
 
